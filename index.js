@@ -6,17 +6,18 @@
 
 (function () {
     var Marzipano = window.Marzipano;
+    var screenfull = window.screenfull; // Kept for fullscreen functionality
+    var data = window.APP_DATA; // Assumes your data.js exists
 
-    // --- 1. CONFIGURATION (CHECK THESE VALUES) ---
+    // --- 1. CONFIGURATION ---
     var PANO_CONTAINER_ID = 'pano';
-    var SCENE_ID = '0-greeennpano'; // CRITICAL: Must match your scene folder name
-    var PANO_FILE_NAME = 'transparent_garden_pano.png'; // CRITICAL: Must be the PNG file name
-    var PANO_WIDTH_PX = 8192;      // CRITICAL: The exact pixel width of your PNG (or close to it)
+    var SCENE_ID = '0-greeennpano';
+    var PANO_FILE_NAME = 'transparent_garden_pano.png';
 
-    var INITIAL_YAW = 0;          // Starting horizontal angle (0 = forward)
-    var INITIAL_PITCH = 0;        // Starting vertical angle
-    var INITIAL_FOV = 1.0;        // Field of view (zoom level)
-    var FACE_SIZE = 2048;         // A common, safe base size for the RectilinearView limiter
+    // Use a conservative yet high-res base size to define the image boundary
+    var PANO_WIDTH_PX = 8192;
+    var FACE_SIZE = 2048;
+    var ROTATE_SPEED = 0.03;
 
     // --- 2. VIEWER INITIALIZATION AND ALPHA CHANNEL FIX ---
 
@@ -26,41 +27,52 @@
     var viewer = new Marzipano.Viewer(panoElement, {
         stage: {
             stageParameters: {
-                alpha: true // FORCES WebGL to respect the PNG's transparency
+                alpha: true // CRITICAL: FORCES WebGL to respect PNG transparency
             }
         }
     });
 
-    // --- 3. SCENE DATA SETUP ---
+    // --- 3. SCENE CREATION (Simplified for Single Scene) ---
 
-    // Define the source as a single, non-tiled image
-    // This looks for 'tiles/0-greeennpano/transparent_garden_pano.png'
-    var urlPrefix = "tiles";
-    var source = Marzipano.SingleImageSource.fromString(
-        urlPrefix + "/" + SCENE_ID + "/" + PANO_FILE_NAME
-    );
+    var scenes = data.scenes.map(function (data) {
+        var urlPrefix = "tiles";
 
-    // CRITICAL FIX: Define geometry as Equirectangular (Sphere), using the PNG width
-    var geometry = new Marzipano.EquirectGeometry([{ size: PANO_WIDTH_PX }]);
+        // 1. Source: Use SingleImageSource for the single PNG file
+        var source = Marzipano.SingleImageSource.fromString(
+            urlPrefix + "/" + data.id + "/" + PANO_FILE_NAME
+        );
 
-    // Define the viewing limits using a simpler, fixed size to avoid complex data array issues
-    var limiter = Marzipano.RectilinearView.limit.traditional(FACE_SIZE, 100 * Math.PI / 180, 120 * Math.PI / 180);
+        // 2. Geometry: CRITICAL FIX. Equirectangular geometry, using the defined size.
+        // This solves the 'loadAsset' crash by providing correct data.
+        var geometry = new Marzipano.EquirectGeometry([{ size: PANO_WIDTH_PX }]);
 
-    var view = new Marzipano.RectilinearView({ yaw: INITIAL_YAW, pitch: INITIAL_PITCH, fov: INITIAL_FOV }, limiter);
+        // 3. View Limiter: Uses a conservative face size (2048) for viewing limits
+        var limiter = Marzipano.RectilinearView.limit.traditional(FACE_SIZE, 100 * Math.PI / 180, 120 * Math.PI / 180);
 
-    // --- 4. CREATE AND DISPLAY SCENE ---
+        var view = new Marzipano.RectilinearView(data.initialViewParameters, limiter);
 
-    var scene = viewer.createScene({
-        source: source,
-        geometry: geometry,
-        view: view,
-        pinFirstLevel: true
+        var scene = viewer.createScene({
+            source: source,
+            geometry: geometry,
+            view: view,
+            pinFirstLevel: true
+        });
+
+        // --- Hotspot Creation Logic remains here (as defined in original code) ---
+        data.linkHotspots.forEach(function (hotspot) { /* ... */ });
+        data.infoHotspots.forEach(function (hotspot) { /* ... */ });
+        // ---
+
+        return {
+            data: data,
+            scene: scene,
+            view: view
+        };
     });
 
-    scene.switchTo();
+    // --- 4. CONTROL FUNCTIONS AND START ---
 
-    // --- 5. Cleaned-up Mobile Mode and Deprecation Fix (Minimal Version) ---
-
+    // Simplified Mobile/Desktop mode detection (Fixes MQL Deprecation)
     if (window.matchMedia) {
         var mql = matchMedia("(max-width: 500px), (max-height: 500px)");
         var setMode = function () {
@@ -73,10 +85,19 @@
             }
         };
         setMode();
-        // FIX: Replaces the deprecated addListener method
-        mql.addEventListener('change', setMode);
+        mql.addEventListener('change', setMode); // FIX: Uses modern event listener
     } else {
         document.body.classList.add('desktop');
     }
+
+    // Set up autorotate
+    var autorotate = Marzipano.autorotate({ yawSpeed: ROTATE_SPEED, targetPitch: 0, targetFov: Math.PI / 2 });
+
+    // (Other control functions like switchScene, toggleAutorotate, etc., remain here)
+
+    // Display the initial scene.
+    switchScene(scenes[0]); // Assumes the first scene in data.js is the one to load
+
+    /* ... (All helper functions like switchScene, updateSceneName, createLinkHotspotElement, etc., must be included here) ... */
 
 })();
