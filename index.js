@@ -79,26 +79,18 @@
     // Create scenes.
     var scenes = data.scenes.map(function (data) {
         var urlPrefix = "tiles";
-        var source;
 
-        // ⬇️ FINAL CORRECTED CODE: Conditional Image Source Selection ⬇️
+        // ⬇️ FINAL CODE: Use SingleImageSource unconditionally for this single-scene test ⬇️
+        var source = Marzipano.SingleImageSource.fromString(
+            urlPrefix + "/" + data.id + "/transparent_garden_pano.png"
+        );
+        // ⬆️ END FINAL CODE ⬆️
 
-        // Check if the current scene's ID matches the folder ID where you put the PNG.
-        // Replace '0-greeennpano' with the exact ID of your transparent scene folder.
-        if (data.id === '0-greeennpano') {
-            // Use the single-image source for the transparent scene
-            source = Marzipano.SingleImageSource.fromString(
-                urlPrefix + "/" + data.id + "/transparent_garden_pano.png"
-            );
-        } else {
-            // Use the original tiled source for all other normal scenes (kitchens, etc.)
-            source = Marzipano.ImageUrlSource.fromString(
-                urlPrefix + "/" + data.id + "/{z}/{f}/{y}/{x}.jpg",
-                { cubeMapPreviewUrl: urlPrefix + "/" + data.id + "/preview.jpg" });
-        }
+        var geometry = new Marzipano.EquirectGeometry(data.levels);
+    // ... rest of the code continues
         // ⬆️ END FINAL CORRECTED CODE ⬆️
 
-        var geometry = new Marzipano.CubeGeometry(data.levels);
+        var geometry = new Marzipano.EquirectGeometry(data.levels);
 
         var limiter = Marzipano.RectilinearView.limit.traditional(data.faceSize, 100 * Math.PI / 180, 120 * Math.PI / 180);
         var view = new Marzipano.RectilinearView(data.initialViewParameters, limiter);
