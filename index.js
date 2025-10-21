@@ -92,9 +92,13 @@
     // ... rest of the code continues
         // ⬆️ END FINAL CORRECTED CODE ⬆️
 
-        var geometry = new Marzipano.EquirectGeometry([{ size: data.faceSize * 6 }]);
+        // FINAL FIX: Hardcode simple Geometry and Limiter values to avoid conflicting data structures
+        var geometry = new Marzipano.EquirectGeometry([{ size: 4096 }]); // Tells Marzipano the base resolution size
 
-        var limiter = Marzipano.RectilinearView.limit.traditional(data.faceSize, 100 * Math.PI / 180, 120 * Math.PI / 180);
+        // Define limits based on the geometry type (Equirectangular does not need complex limits)
+        var limiter = Marzipano.RectilinearView.limit.traditional(4096, 100 * Math.PI / 180, 120 * Math.PI / 180);
+
+        // The initial view is now based on the new, simple limiter
         var view = new Marzipano.RectilinearView(data.initialViewParameters, limiter);
 
         var scene = viewer.createScene({
