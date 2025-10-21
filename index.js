@@ -76,17 +76,19 @@
         }
     });
 
+    // ... (Code before this block is correct, including the source definition) ...
+
     // Create scenes.
     var scenes = data.scenes.map(function (data) {
         var urlPrefix = "tiles";
+        var source;
 
-        // ⬇️ FINAL CODE: Use SingleImageSource unconditionally for this single-scene test ⬇️
-        var source = Marzipano.SingleImageSource.fromString(
-            urlPrefix + "/" + data.id + "/transparent_garden_pano.png"
-        );
-        // ⬆️ END FINAL CODE ⬆️
+        // ... (Your source definition is here) ...
 
-        var geometry = new Marzipano.EquirectGeometry(data.levels);
+        // ⬇️ FINAL, CLEANEST GEOMETRY FIX (Replace the old line) ⬇️
+        var geometry = new Marzipano.EquirectGeometry([{ width: 8192 }]); // ⬅️ Tells Marzipano it's one 8K wide image.
+
+        var limiter = Marzipano.RectilinearView.limit.traditional(data.faceSize, 100 * Math.PI / 180, 120 * Math.PI / 180);
     // ... rest of the code continues
         // ⬆️ END FINAL CORRECTED CODE ⬆️
 
