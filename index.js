@@ -92,11 +92,7 @@
     // ... rest of the code continues
         // ⬆️ END FINAL CORRECTED CODE ⬆️
 
-        // CRITICAL FIX: The previous data.levels object was incorrect for EquirectGeometry.
-        // We replace it with a simple, hardcoded level that tells Marzipano the image size.
-        var geometry = new Marzipano.EquirectGeometry([
-            { size: 8192 } // Tells Marzipano the single image is 8192 pixels wide
-        ]);
+        var geometry = new Marzipano.EquirectGeometry([{ size: data.faceSize * 6 }]);
 
         var limiter = Marzipano.RectilinearView.limit.traditional(data.faceSize, 100 * Math.PI / 180, 120 * Math.PI / 180);
         var view = new Marzipano.RectilinearView(data.initialViewParameters, limiter);
